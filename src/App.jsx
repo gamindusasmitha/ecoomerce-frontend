@@ -1,14 +1,42 @@
 import { useState } from 'react'
 
-import './App.css'
+
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import HomePage from '../pages/registerPage'
+import LoginPage from '../pages/loginPage'
+import AdminPage from '../pages/adminPage'
+import RegisterPage from '../pages/registerPage'
+import Header from '../components/header'
 
 function App() {
-  const [count, setCount] = useState(0)
+  
 
   return (
-    <div className='w-80 h-80 border bg-red-600'>
+    
+      <BrowserRouter>
 
-    </div>
+      <div className='w-full h-screen bg-primary text-secondary'><Header/>
+
+        <Routes path="/"> <Route path='/' element={<HomePage/>}>
+
+        </Route><Route path='/login' element={<LoginPage/>}>
+
+        </Route><Route path='/register' element={<RegisterPage/>}>
+
+        </Route><Route path='/admin' element={<AdminPage/>}>
+
+        </Route>
+
+
+        </Routes>
+
+
+      </div>
+
+      
+      </BrowserRouter>
+
+    
   )
 }
 
