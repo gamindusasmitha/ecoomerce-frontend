@@ -1,7 +1,18 @@
 @import "tailwindcss";
 @theme {
-    --color-primary :#F7F2EB;
-    --color-secondary :#010736;
-    --color-accent :#8B9A6E;
+    --color-primary :#F7FAFF;
+    --color-secondary :#111827;
+    --color-accent :#27302b;
     
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: #808080;
+  border-radius: 10px;
 }
