@@ -8,6 +8,7 @@ import RegisterPage from '../pages/registerPage'
 import AdminPage from '../pages/adminPage'
 
 import Header from '../components/header'
+import { Toaster } from 'react-hot-toast'
 
 function App() {
   
@@ -15,6 +16,8 @@ function App() {
   return (
     
       <BrowserRouter>
+
+      <Toaster position='top-right'/>
 
       <div className='w-full h-screen bg-primary text-secondary'>
 
