@@ -26,6 +26,8 @@ export default function LoginPage(){
             navigate("/")
         }
 
+        localStorage.setItem("token ", res.data.token)
+
 
              
         } catch(err){
