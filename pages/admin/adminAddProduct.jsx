@@ -20,34 +20,60 @@ export default function AdminAddProductPage() {
     const navigate =useNavigate()
 
 
-    async function addProduct(params) {
-        const token = localStorage.getItem("token")
-        if (token==nul){
-            toast.error("You must be login as admin to add product")
-            Navigate("/login");
-            return
-        }
-        if (productID==""|| name==""){
-            toast.error("Please fill the alll required fields")
-            return
-        }
+    async function addProduct() {
+    const token = localStorage.getItem("token");
 
-        try{
-            await axios.post( import.meta.env.VITE_BACKEND_URL + "/products/",{ 
-                productID : productID,
-
-             },{headers :{
-                Authorization : "Bearear" + token
-             }} )
-
-            toast.success("Product added succesfully")
-            navigate("/admin/products")
-
-        }catch{(error)
-            toast.error("Error adding products")
-        }
-        
+    if (token == null) {
+        toast.error("You must be logged in as admin to add a product");
+        navigate("/login");
+        return;
     }
+
+    if (productID === "" || name === "") {
+        toast.error("Please fill in all required fields");
+        return;
+    }
+
+    try {
+        await axios.post(
+            import.meta.env.VITE_BACKEND_URL + "/products/",
+            {
+                productID: productID,
+                name: name,
+                altNames: altNames
+                    .split(",")
+                    .map((item) => item.trim())
+                    .filter(Boolean),
+                description: description,
+                price: Number(price),
+                labelledPrice: Number(labelledPrice),
+                images: images
+                    .split(",")
+                    .map((item) => item.trim())
+                    .filter(Boolean),
+                category: category,
+                model: model,
+                brand: brand,
+                stock: Number(stock),
+                isAvailable: isAvailable
+            },
+            {
+                headers: {
+                    Authorization: "Bearer " + token
+                }
+            }
+        );
+
+        toast.success("Product added successfully");
+        navigate("/admin/products");
+
+    } catch (error) {
+        console.error("Error adding product:", error.response?.data || error);
+        toast.error(
+            error.response?.data?.message || "Error adding product"
+        );
+    }
+}
 
     return (
         <div className="w-full  overflow-y-scroll flex justify-center p-8 items-center">
@@ -362,12 +388,12 @@ export default function AdminAddProductPage() {
 
 
                <div className="flex gap-4 mt-6">
-                    <button
+                    <button onClick={addProduct}
                         type="submit"
-                        onClick={addProduct}
+                        
                         className="flex-1 h-[50px] rounded-xl bg-amber-600 hover:bg-amber-500 
                          text-white font-semibold text-lg shadow-md 
-                         transition duration-200"
+                         transition duration-200 cursor-pointer"
                     >
                          Add Product
                     </button>
@@ -377,7 +403,7 @@ export default function AdminAddProductPage() {
                         onClick={() => navigate("/admin/products")}
                         className="flex-1 h-[50px] rounded-xl bg-white/10 hover:bg-red/20 
                         border border-white/20 text-white font-semibold text-lg 
-                         transition duration-200 hover:red-500/50"
+                         transition duration-200 hover:red-500/50 cursor-pointer "
                     >
                         Cancel
                     </button>
