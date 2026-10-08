@@ -9,36 +9,37 @@ export default function LoginPage(){
     const [password, setPassword ] = useState("")
     const navigate = useNavigate();
 
-    async function login(){
+   async function login() {
+    try {
+        const res = await axios.post(
+            import.meta.env.VITE_BACKEND_URL + "/users/login",
+            {
+                email: email,
+                password: password,
+            }
+        );
 
-        try {
-            const res = await axios.post(import.meta.env.VITE_BACKEND_URL + "/users/login" , {
-            email : email ,
-            password : password 
-
-            
-
-        }); toast.success('Successfully toasted!')
-
-        if(res.data.role == "admin"){
-            navigate("/admin") ;
-        }else{
-            navigate("/")
+        // Your backend sends "User not found" without a token
+        if (!res.data.token) {
+            toast.error(res.data.message || "Login failed");
+            return;
         }
 
-        localStorage.setItem("token ", res.data.token)
+        // Save the token FIRST (no space in the name!)
+        localStorage.setItem("token", res.data.token);
 
+        toast.success("Login successful");
 
-             
-        } catch(err){
-            console.log(err)
-
-            toast.error("This didn't work.")
-
+        if (res.data.role == "admin") {
+            navigate("/admin");
+        } else {
+            navigate("/");
         }
-
-
+    } catch (err) {
+        console.log(err);
+        toast.error("This didn't work.");
     }
+}
 
 
 

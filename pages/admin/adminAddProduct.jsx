@@ -2,6 +2,7 @@ import axios from "axios";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { Link, Navigate, useNavigate } from "react-router-dom";
+import uploadFile from "../../utils/mediaUpload";
 
 export default function AdminAddProductPage() {
 
@@ -11,7 +12,7 @@ export default function AdminAddProductPage() {
     const [description, setDescription] = useState("");
     const [price, setPrice] = useState("");
     const [labeledPrice, setLabeledPrice] = useState("");
-    const [images, setImages] = useState("");
+    const [files, setFiles] = useState([]);
     const [category, setCategory] = useState("");
     const [model, setModel] = useState("");
     const [brand, setBrand] = useState("");
@@ -21,58 +22,56 @@ export default function AdminAddProductPage() {
 
 
     async function addProduct() {
-    const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token");
 
-    if (token == null) {
-        toast.error("You must be logged in as admin to add a product");
-        navigate("/login");
-        return;
-    }
+  if (token == null) {
+    toast.error("Please log in as admin first");
+    navigate("/login");
+    return;
+  }
 
-    if (productID === "" || name === "") {
-        toast.error("Please fill in all required fields");
-        return;
-    }
+  if (productID === "" || name === "") {
+    toast.error("Please fill in all required fields");
+    return;
+  }
 
-    try {
-        await axios.post(
-            import.meta.env.VITE_BACKEND_URL + "/products/",
-            {
-                productID: productID,
-                name: name,
-                altNames: altNames
-                    .split(",")
-                    .map((item) => item.trim())
-                    .filter(Boolean),
-                description: description,
-                price: Number(price),
-                labelledPrice: Number(labelledPrice),
-                images: images
-                    .split(",")
-                    .map((item) => item.trim())
-                    .filter(Boolean),
-                category: category,
-                model: model,
-                brand: brand,
-                stock: Number(stock),
-                isAvailable: isAvailable
-            },
-            {
-                headers: {
-                    Authorization: "Bearer " + token
-                }
-            }
-        );
+  try {
+    // 1. Upload the images and get their links
+    const imageUrls = await Promise.all(files.map((file) => uploadFile(file)));
 
-        toast.success("Product added successfully");
-        navigate("/admin/products");
+    // 2. Send the product to the backend
+    await axios.post(
+      import.meta.env.VITE_BACKEND_URL + "/products/",
+      {
+        productID: productID,
+        name: name,
+        altNames: altNames
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean),
+        description: description,
+        price: Number(price),
+        labelledPrice: Number(labeledPrice),
+        images: imageUrls,
+        category: category,
+        model: model,
+        brand: brand,
+        stock: Number(stock),
+        isAvailable: isAvailable,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
-    } catch (error) {
-        console.error("Error adding product:", error.response?.data || error);
-        toast.error(
-            error.response?.data?.message || "Error adding product"
-        );
-    }
+    toast.success("Product added successfully");
+    navigate("/admin/products");
+  } catch (error) {
+    console.error("Error adding product:", error.response?.data || error);
+    toast.error(error.response?.data?.message || error.message || "Error adding product");
+  }
 }
 
     return (
@@ -341,18 +340,19 @@ export default function AdminAddProductPage() {
                     </h2>
 
                     <input
-                        type="text"
-                        value={images}
-                        onChange={(e) => setImages(e.target.value)}
-                        placeholder="Enter image URL"
+                        type="file"
+                        multiple={true}
+                        
+                        onChange={(e) => setFiles(Array.from(e.target.files))}
+                        
                         className="w-full h-[45px] px-4 rounded-lg
                                    bg-white/10 border border-white/20
                                    text-white placeholder-white/40
-                                   outline-none focus:border-amber-500"
+                                   outline-none focus:border-amber-500 mt-2"
                     />
 
                     <p className="text-white/40 text-sm mt-2">
-                        You can add image upload functionality later.
+                        Upload your product images here.
                     </p>
 
                 </div>
