@@ -9,6 +9,7 @@ import {
 } from "react-icons/fi";
 import AdminProductPage from "./admin/adminProductPage";
 import AdminAddProductPage from "./admin/adminAddProduct";
+import AdminUpdateProductPage from "./admin/adminUpdateProduct";
 
 export default function AdminPage() {
     return (
@@ -138,6 +139,12 @@ export default function AdminPage() {
                             <AdminAddProductPage/>
                         }
                     />
+                    <Route
+                        path="/update-product"
+                        element={
+                            <AdminUpdateProductPage/>
+                        }
+                    />
 
                     <Route
                         path="/users"
@@ -156,6 +163,7 @@ export default function AdminPage() {
                             </h1>
                         }
                     />
+                    
 
                 </Routes>
 

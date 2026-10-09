@@ -1,12 +1,15 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { BiPlus, BiEdit } from "react-icons/bi";
-import { Link } from "react-router-dom";
+
 import ProductDeleteButton from "../../components/product DeleteButton"
+
+import { Link, useNavigate } from "react-router-dom";
 
 export default function AdminProductPage() {
     const [products, setProducts] = useState([]);
     const [loaded, setLoaded] = useState(false);
+    const navigate = useNavigate();
 
     // Get products from backend
     useEffect(() => {
@@ -167,15 +170,16 @@ export default function AdminProductPage() {
 
                                                 {/* EDIT BUTTON */}
                                                 <button
-                                                    className="w-full max-w-[100px]
-                                                    px-4 py-2
-                                                    flex items-center justify-center
-                                                    gap-2 rounded-lg
-                                                    bg-blue-50 text-blue-600
-                                                    hover:bg-blue-100
-                                                    transition"
+                                                onClick={() => navigate("/admin/update-product",{state: item} )}
+                                                className="w-full max-w-[100px]
+                                                 px-4 py-2
+                                                flex items-center justify-center
+                                                gap-2 rounded-lg
+                                                 bg-blue-50 text-blue-600
+                                                 hover:bg-blue-100
+                                                transition"
                                                 >
-                                                    <BiEdit className="text-lg" />
+                                                 <BiEdit className="text-lg" />
                                                     Edit
                                                 </button>
 
