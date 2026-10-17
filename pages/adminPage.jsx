@@ -10,6 +10,7 @@ import {
 import AdminProductPage from "./admin/adminProductPage";
 import AdminAddProductPage from "./admin/adminAddProduct";
 import AdminUpdateProductPage from "./admin/adminUpdateProduct";
+import AdminOrdersPage from "./admin/adminOrdersPage";
 
 export default function AdminPage() {
     return (
@@ -120,9 +121,7 @@ export default function AdminPage() {
                     <Route
                         path="/"
                         element={
-                            <h1 className="text-2xl text-black">
-                                Orders
-                            </h1>
+                            <AdminOrdersPage/>
                         }
                     />
 

@@ -36,3 +36,7 @@
 .animate-popIn {
   animation: popIn 0.25s ease-out;
 }
+
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));

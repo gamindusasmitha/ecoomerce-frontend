@@ -3,6 +3,7 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate, useParams } from "react-router-dom";
+import { addToCart } from "../utils/cart";
 
 export default function ProductOverview() {
   const { productID } = useParams();
@@ -110,7 +111,7 @@ export default function ProductOverview() {
     : 0;
 
   return (
-    <div className="min-h-screen bg-[#080d17] px-4 py-8 text-white sm:px-8 lg:px-12 lg:py-12">
+    <div className="min-h-screen bg-[#080d17] px-4 py-8 text-white sm:px-8 lg:px-12 lg:py-12 dark:bg-[#080d17] dark:text-white">
       <div className="mx-auto max-w-7xl">
         {/* Breadcrumb */}
         <div className="mb-8 flex flex-wrap items-center gap-2 text-sm text-gray-500">
@@ -294,9 +295,21 @@ export default function ProductOverview() {
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <button
                 onClick={() => {
+                  
                   if (!inStock) return;
-                  toast("Cart functionality is not connected yet.");
-                }}
+                  toast.success("This product succesfully added to the cart.");
+                  addToCart(product,1)
+                  toast(
+                        "You can checkout this product through the cart ",
+                          {
+                            duration: 6000,
+                          }
+                      );
+                }
+                  
+                  
+                  
+                }
                 disabled={!inStock}
                 className="flex-1 rounded-xl bg-emerald-400 px-6 py-4 font-bold text-gray-950 shadow-lg shadow-emerald-400/10 transition hover:bg-emerald-300 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-gray-700 disabled:text-gray-400 disabled:shadow-none"
               >
