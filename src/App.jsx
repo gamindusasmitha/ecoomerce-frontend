@@ -6,7 +6,7 @@ import HomePage from '../pages/homePage'
 import LoginPage from '../pages/loginPage'
 import RegisterPage from '../pages/registerPage'
 import AdminPage from '../pages/adminPage'
-
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import Header from '../components/header'
 import { Toaster } from 'react-hot-toast'
 
@@ -14,6 +14,8 @@ function App() {
   
 
   return (
+
+    <GoogleOAuthProvider clientId="719299906421-rsc64go64dnvugb6kp1f0qgigbc9po8i.apps.googleusercontent.com">
     
       <BrowserRouter>
 
@@ -36,7 +38,7 @@ function App() {
 
       
       </BrowserRouter>
-
+    </GoogleOAuthProvider>
     
   )
 }
@@ -44,4 +46,3 @@ function App() {
 export default App
 
 
- 
