@@ -25,12 +25,15 @@ import AdminProductPage from "./admin/adminProductPage";
 import AdminAddProductPage from "./admin/adminAddProduct";
 import AdminUpdateProductPage from "./admin/adminUpdateProduct";
 import AdminOrdersPage from "./admin/adminOrdersPage";
+import UserPage from './admin/adminUserPage';
+import { BiHome } from "react-icons/bi";
 
 const navigationItems = [
   { name: "Orders", path: "/admin", icon: FiShoppingBag, end: true },
   { name: "Products", path: "/admin/products", icon: FiPackage },
   { name: "Users", path: "/admin/users", icon: FiUsers },
   { name: "Reviews", path: "/admin/reviews", icon: FiStar },
+  { name: "Home page", path: "/", icon: BiHome }
 ];
 
 export default function AdminPage() {
@@ -355,15 +358,7 @@ export default function AdminPage() {
               <Route
                 path="/users"
                 element={
-                  <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 sm:p-8">
-                    <FiUsers className="mb-4 text-3xl text-emerald-400" />
-                    <h2 className="text-xl font-bold text-white">
-                      Users
-                    </h2>
-                    <p className="mt-2 text-sm text-slate-400">
-                      The user management page will appear here.
-                    </p>
-                  </div>
+                  <UserPage/>
                 }
               />
 
@@ -381,6 +376,7 @@ export default function AdminPage() {
                   </div>
                 }
               />
+              
 
               <Route
                 path="*"
