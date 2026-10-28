@@ -1,20 +1,19 @@
-
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 import toast from "react-hot-toast";
 import {
   FiArrowLeft,
   FiArrowRight,
   FiCreditCard,
-  FiShield,
   FiTruck,
   FiCheckCircle,
   FiShoppingBag,
-  
 } from "react-icons/fi";
 import { MdAccountBalance } from "react-icons/md";
 
 const CART_KEY = "cart";
+const DELIVERY_FEE = 400; // normal delivery
 
 const initialForm = {
   fullName: "",
@@ -27,32 +26,38 @@ const initialForm = {
   deliveryNote: "",
 };
 
-const paymentMethods = [
-  {
-    id: "card",
-    title: "Card Payment",
-    description: "Pay securely using a debit or credit card.",
-    icon: FiCreditCard,
-  },
-  {
-    id: "bank",
-    title: "Bank Transfer",
-    description: "Transfer the payment to our bank account.",
-    icon: MdAccountBalance,
-  },
-  {
-    id: "cod",
-    title: "Cash on Delivery",
-    description: "Pay when your order is delivered.",
-    icon: FiTruck,
-  },
-  {
-    id: "koko",
-    title: "Koko Payment",
-    description: "Continue to Koko's payment service.",
-    icon: FiShoppingBag,
-  },
+const DISTRICTS = [
+  "Ampara", "Anuradhapura", "Badulla", "Batticaloa", "Colombo", "Galle",
+  "Gampaha", "Hambantota", "Jaffna", "Kalutara", "Kandy", "Kegalle",
+  "Kilinochchi", "Kurunegala", "Mannar", "Matale", "Matara", "Monaragala",
+  "Mullaitivu", "Nuwara Eliya", "Polonnaruwa", "Puttalam", "Ratnapura",
+  "Trincomalee", "Vavuniya",
 ];
+
+const paymentMethods = [
+  { id: "card", title: "Card Payment", description: "Pay securely using a debit or credit card.", icon: FiCreditCard },
+  { id: "bank", title: "Bank Transfer", description: "Transfer the payment to our bank account.", icon: MdAccountBalance },
+  { id: "cod", title: "Cash on Delivery", description: "Pay when your order is delivered.", icon: FiTruck },
+  { id: "koko", title: "Koko Payment", description: "Continue to Koko's payment service.", icon: FiShoppingBag },
+];
+
+const inputClass =
+  "mt-2 w-full rounded-xl border border-white/10 bg-[#080d17] px-4 py-3 text-sm text-white outline-none transition placeholder:text-gray-600 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/10";
+
+const labelClass = "text-sm font-medium text-gray-300";
+
+const getId = (item) => item.productID || item._id;
+const getName = (item) => item.name || item.product?.name || "Product";
+const getImage = (item) =>
+  item.image || item.images?.[0] || item.product?.images?.[0] || "";
+const getPrice = (item) => Number(item.price ?? item.product?.price ?? 0);
+const getQty = (item) => Math.max(1, Number(item.quantity) || 1);
+
+const formatPrice = (amount) =>
+  `Rs. ${Number(amount).toLocaleString("en-LK", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -75,55 +80,27 @@ export default function Checkout() {
     localStorage.setItem(CART_KEY, JSON.stringify(cart));
   }, [cart]);
 
-  const getId = (item) => item.productID || item._id;
-
-  const getName = (item) =>
-    item.name || item.product?.name || "Product";
-
-  const getImage = (item) =>
-    item.images?.[0] || item.product?.images?.[0] || "";
-
-  const getPrice = (item) =>
-    Number(item.price ?? item.product?.price ?? 0);
-
   const itemCount = useMemo(
-    () =>
-      cart.reduce(
-        (sum, item) => sum + Math.max(1, Number(item.quantity) || 1),
-        0
-      ),
+    () => cart.reduce((sum, item) => sum + getQty(item), 0),
     [cart]
   );
 
   const subtotal = useMemo(
-    () =>
-      cart.reduce(
-        (sum, item) =>
-          sum +
-          getPrice(item) *
-            Math.max(1, Number(item.quantity) || 1),
-        0
-      ),
+    () => cart.reduce((sum, item) => sum + getPrice(item) * getQty(item), 0),
     [cart]
   );
 
-  // Delivery is not calculated until your store's delivery policy is set.
-  const deliveryFee = 0;
-  const total = subtotal + deliveryFee;
-
-  const formatPrice = (amount) =>
-    `Rs. ${Number(amount).toLocaleString("en-LK", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
+  const total = subtotal + DELIVERY_FEE;
 
   const handleChange = (event) => {
     const { name, value } = event.target;
     setForm((previous) => ({ ...previous, [name]: value }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
+
+    if (submitting) return;
 
     if (cart.length === 0) {
       toast.error("Your cart is empty.");
@@ -135,44 +112,67 @@ export default function Checkout() {
       return;
     }
 
-    setSubmitting(true);
+    // Card and Koko are not connected yet, so they cannot place an order
+    if (paymentMethod === "card" || paymentMethod === "koko") {
+      toast.error(
+        "This payment method is not available yet. Please choose Cash on Delivery or Bank Transfer."
+      );
+      return;
+    }
 
-    const orderDraft = {
-      customer: form,
-      items: cart.map((item) => ({
-        productID: getId(item),
-        name: getName(item),
-        price: getPrice(item),
-        quantity: Math.max(1, Number(item.quantity) || 1),
-        image: getImage(item),
-      })),
-      paymentMethod,
-      subtotal,
-      deliveryFee,
-      total,
-      createdAt: new Date().toISOString(),
-    };
+    const token = localStorage.getItem("token");
 
-    // Save a checkout draft only. This does not place or pay for an order.
-    localStorage.setItem("checkoutDraft", JSON.stringify(orderDraft));
+    if (token == null) {
+      toast.error("Please log in to place your order.");
+      navigate("/login");
+      return;
+    }
 
-    setSubmitting(false);
+    try {
+      setSubmitting(true);
 
-    if (paymentMethod === "card") {
-      toast("Connect a secure card payment gateway to continue.");
-    } else if (paymentMethod === "bank") {
-      toast("Add your verified bank details and order confirmation process.");
-    } else if (paymentMethod === "koko") {
-      toast("Connect the Koko merchant payment integration to continue.");
-    } else {
-      toast("Checkout details saved. Connect your backend to place the order.");
+      const response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/orders`,
+        {
+          name: form.fullName,
+          phone: form.phone,
+          address: `${form.address}, ${form.city}, ${form.district} ${form.postalCode}`.trim(),
+          paymentMethod,
+          deliveryNote: form.deliveryNote,
+          // Only IDs and quantities: the backend uses its own prices
+          items: cart.map((item) => ({
+            productID: getId(item),
+            quantity: getQty(item),
+          })),
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      toast.success(`Order placed! Your order ID is ${response.data.orderID}`);
+      setCart([]);
+      navigate("/");
+    } catch (error) {
+      console.error("Order error:", error.response?.data || error);
+
+      if (error.response?.status === 401) {
+        localStorage.removeItem("token");
+        toast.error("Please log in again.");
+        navigate("/login");
+        return;
+      }
+
+      toast.error(
+        error.response?.data?.message ||
+          "Could not place your order. Please try again."
+      );
+    } finally {
+      setSubmitting(false);
     }
   };
-
-  const inputClass =
-    "mt-2 w-full rounded-xl border border-white/10 bg-[#080d17] px-4 py-3 text-sm text-white outline-none transition placeholder:text-gray-600 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/10";
-
-  const labelClass = "text-sm font-medium text-gray-300";
 
   if (cart.length === 0) {
     return (
@@ -212,9 +212,7 @@ export default function Checkout() {
             <p className="text-xs font-semibold uppercase tracking-[0.25em] text-emerald-400">
               I-Computer Store
             </p>
-            <h1 className="mt-2 text-3xl font-bold sm:text-4xl">
-              Checkout
-            </h1>
+            <h1 className="mt-2 text-3xl font-bold sm:text-4xl">Checkout</h1>
             <p className="mt-2 text-sm text-gray-400">
               Your next upgrade is almost ready. Complete your details below.
             </p>
@@ -351,15 +349,7 @@ export default function Checkout() {
                       <option value="" className="bg-[#101827]">
                         Select district
                       </option>
-                      {[
-                        "Ampara", "Anuradhapura", "Badulla", "Batticaloa",
-                        "Colombo", "Galle", "Gampaha", "Hambantota",
-                        "Jaffna", "Kalutara", "Kandy", "Kegalle",
-                        "Kilinochchi", "Kurunegala", "Mannar", "Matale",
-                        "Matara", "Monaragala", "Mullaitivu", "Nuwara Eliya",
-                        "Polonnaruwa", "Puttalam", "Ratnapura", "Trincomalee",
-                        "Vavuniya",
-                      ].sort().map((district) => (
+                      {DISTRICTS.map((district) => (
                         <option
                           key={district}
                           value={district}
@@ -455,23 +445,15 @@ export default function Checkout() {
                   })}
                 </div>
 
-                {/* Instructions depend on selected payment method */}
+                {/* Instructions depend on the selected payment method */}
                 <div className="mt-5 rounded-xl border border-white/10 bg-[#080d17] p-4 sm:p-5">
                   {paymentMethod === "card" && (
                     <div>
-                      <h3 className="font-semibold text-white">
-                        Card Payment
-                      </h3>
+                      <h3 className="font-semibold text-white">Card Payment</h3>
                       <p className="mt-2 text-sm leading-6 text-gray-400">
-                        You will need to complete payment through a secure
-                        payment gateway. Connect your selected provider before
-                        accepting real card payments. Do not collect or store
-                        card numbers or CVV details in this form.
+                        Card payment is coming soon. Please choose Cash on
+                        Delivery or Bank Transfer for now.
                       </p>
-                      <div className="mt-3 flex items-center gap-2 text-xs text-emerald-400">
-                        <FiShield />
-                        Secure gateway integration required
-                      </div>
                     </div>
                   )}
 
@@ -481,14 +463,11 @@ export default function Checkout() {
                         Bank Transfer Instructions
                       </h3>
                       <p className="mt-2 text-sm leading-6 text-gray-400">
-                        Display your verified business bank account details
-                        here. Customers should transfer the order amount and
-                        provide a payment reference for verification.
+                        Please complete your payment to one of the following
+                        Bank accounts.
                       </p>
                       <div className="mt-4 rounded-lg border border-amber-400/20 bg-amber-400/5 p-3 text-xs leading-5 text-amber-200">
-                        Store owner: replace this message with your actual
-                        bank name, account name, account number, and branch.
-                        Verify transfers before confirming an order.
+                        Bank details.
                       </div>
                     </div>
                   )}
@@ -499,32 +478,29 @@ export default function Checkout() {
                         Cash on Delivery
                       </h3>
                       <p className="mt-2 text-sm leading-6 text-gray-400">
-                        Pay the delivery person when your order arrives.
-                        Please make sure your phone number and delivery
-                        address are correct.
+                        Pay the delivery person when your order arrives. Please
+                        make sure your phone number and delivery address are
+                        correct.
                       </p>
-                      <div className="mt-3 flex items-center gap-2 text-xs text-emerald-400">
-                        <FiTruck />
-                        Delivery availability must be confirmed by the store
+                      <div className="mt-3 flex items-start gap-2 text-xs text-emerald-400">
+                        <FiTruck className="mt-0.5 shrink-0" />
+                        <div className="space-y-1">
+                          <p>Delivery availability must be confirmed by the store.</p>
+                          <p>Delivery charges:</p>
+                          <p>Normal delivery: 3-4 business days (LKR 400)</p>
+                          <p>One day delivery: 1-2 business days (LKR 700)</p>
+                        </div>
                       </div>
                     </div>
                   )}
 
                   {paymentMethod === "koko" && (
                     <div>
-                      <h3 className="font-semibold text-white">
-                        Koko Payment
-                      </h3>
+                      <h3 className="font-semibold text-white">Koko Payment</h3>
                       <p className="mt-2 text-sm leading-6 text-gray-400">
-                        Koko checkout must be completed through your
-                        registered merchant integration. Eligibility,
-                        available payment plans, and approval are determined
-                        by Koko.
+                        Koko payment is coming soon. Please choose Cash on
+                        Delivery or Bank Transfer for now.
                       </p>
-                      <div className="mt-3 flex items-center gap-2 text-xs text-emerald-400">
-                        <FiShield />
-                        Koko merchant integration required
-                      </div>
                     </div>
                   )}
                 </div>
@@ -559,18 +535,12 @@ export default function Checkout() {
 
                 <div className="max-h-80 space-y-4 overflow-y-auto p-5 sm:p-6">
                   {cart.map((item, index) => {
-                    const quantity = Math.max(
-                      1,
-                      Number(item.quantity) || 1
-                    );
+                    const quantity = getQty(item);
                     const image = getImage(item);
                     const id = getId(item);
 
                     return (
-                      <div
-                        key={id || index}
-                        className="flex items-center gap-3"
-                      >
+                      <div key={id || index} className="flex items-center gap-3">
                         <div className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-[#080d17]">
                           {image ? (
                             <img
@@ -607,15 +577,11 @@ export default function Checkout() {
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between gap-4 text-gray-400">
                       <span>Subtotal</span>
-                      <span className="text-white">
-                        {formatPrice(subtotal)}
-                      </span>
+                      <span className="text-white">{formatPrice(subtotal)}</span>
                     </div>
                     <div className="flex justify-between gap-4 text-gray-400">
                       <span>Delivery</span>
-                      <span className="text-right text-xs text-gray-300">
-                        Confirmed by store
-                      </span>
+                      <span className="text-white">{formatPrice(DELIVERY_FEE)}</span>
                     </div>
                   </div>
 
@@ -627,8 +593,7 @@ export default function Checkout() {
                       </span>
                     </div>
                     <p className="mt-2 text-xs leading-5 text-gray-500">
-                      Delivery charges are not included and may change the
-                      final amount.
+                      Normal delivery charge is included in the order total.
                     </p>
                   </div>
 
@@ -640,13 +605,6 @@ export default function Checkout() {
                     {submitting ? "Please wait..." : "Continue"}
                     <FiArrowRight />
                   </button>
-
-                  <div className="mt-4 flex items-start gap-2 text-xs leading-5 text-gray-500">
-                    <FiShield className="mt-0.5 shrink-0 text-emerald-400" />
-                    Your order is not placed until the checkout is connected
-                    to your backend and the required payment steps are
-                    completed.
-                  </div>
                 </div>
               </section>
 
@@ -663,5 +621,3 @@ export default function Checkout() {
     </main>
   );
 }
-
-    

@@ -21,6 +21,8 @@ import ProductPage from "./productPage";
 import ProductOverview from "./productOverviewPage";
 import CartPage from "./cart";
 import Checkout from "./checkOutPage";
+import AboutPage from "./aboutPage";
+import ContactPage from "./contactPage";
 
 /* All the 3D and cinematic effects live here, in plain CSS */
 const styles = `
@@ -407,8 +409,8 @@ export default function HomePage() {
                         path="/products/overview/:productID"
                         element={<ProductOverview />}
                     />
-                    <Route path="/about" element={<AboutPage />} />
-                    <Route path="/contacts" element={<ContactPage />} />
+                    <Route path="/about" element={<AboutPage/>} />
+                    <Route path="/contact" element={<ContactPage />} />
                     <Route path="/cart" element={<CartPage />} />
                     <Route path="/checkout" element={<Checkout />} />
                     <Route path="*" element={<NotFoundPage />} />
@@ -418,29 +420,9 @@ export default function HomePage() {
     );
 }
 
-function AboutPage() {
-    return (
-        <SimplePage
-            eyebrow="About I-Computer"
-            title="Technology for your next step."
-            description="Explore our computer and technology collection to find products that fit your setup."
-            link="/products"
-            linkText="Explore products"
-        />
-    );
-}
 
-function ContactPage() {
-    return (
-        <SimplePage
-            eyebrow="Get in touch"
-            title="Let's talk technology."
-            description="Have a question? Contact our team through the contact details provided by the store."
-            link="/products"
-            linkText="Browse products"
-        />
-    );
-}
+
+
 
 function NotFoundPage() {
     return (

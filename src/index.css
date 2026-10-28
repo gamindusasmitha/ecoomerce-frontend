@@ -1,32 +1,94 @@
+
 @import "tailwindcss";
+
+/* Tailwind dark mode variant */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Theme colors */
 @theme {
-    --color-primary :#F7FAFF;
-    --color-secondary :#111827;
-    --color-accent :#27302b;
-    --color-gold : #e29816;
-    
+  --color-primary: #080d17;
+  --color-secondary: #f8fafc;
+  --color-accent: #101827;
+  --color-gold: #e29816;
 }
 
+/* Default dark theme */
+:root {
+  color-scheme: dark;
+
+  --page-bg: #080d17;
+  --page-text: #f8fafc;
+  --surface-bg: #101827;
+  --surface-border: #263244;
+  --muted-text: #94a3b8;
+}
+
+/* Light theme */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --page-bg: #f1f5f9;
+  --page-text: #0f172a;
+  --surface-bg: #ffffff;
+  --surface-border: #e2e8f0;
+  --muted-text: #64748b;
+}
+
+/* Global page styles */
+html {
+  min-height: 100%;
+  background-color: var(--page-bg);
+}
+
+body,
+#root {
+  min-height: 100vh;
+  background-color: var(--page-bg);
+  color: var(--page-text);
+  transition:
+    background-color 300ms ease,
+    color 300ms ease;
+}
+
+body {
+  margin: 0;
+}
+
+/* Scrollbar */
 ::-webkit-scrollbar {
   width: 10px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background-color: #808080;
   border-radius: 10px;
 }
 
-
+/* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes popIn {
-  from { opacity: 0; transform: scale(0.9); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .animate-fadeIn {
@@ -36,7 +98,3 @@
 .animate-popIn {
   animation: popIn 0.25s ease-out;
 }
-
-@import "tailwindcss";
-
-@custom-variant dark (&:where(.dark, .dark *));
